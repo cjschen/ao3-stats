@@ -33,3 +33,9 @@ class Rating(StrEnum):
     M = "Mature",
     E = "Explicit",
     NR = "Not Rated"
+
+class TagTypes(StrEnum):
+    CHARACTER = "Characters"
+    WARNING = "Warnings"
+    RELATIONSHIP  = "Relationship"
+    FREEFORM  = "Freeform"
