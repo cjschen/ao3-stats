@@ -13,7 +13,7 @@ class Works(Base):
     __tablename__ = 'works'
     id: Mapped[int] = mapped_column(primary_key=True)
     author: Mapped[str] = mapped_column(String(255))
-    title: Mapped[str] = mapped_column(String(255))
+    heading: Mapped[str] = mapped_column(String(255))
     rating: Mapped[int]
     completed: Mapped[bool]
     last_updated = mapped_column(DateTime)
@@ -26,7 +26,7 @@ class Works(Base):
     bookmarks: Mapped[int]
     total_chapters: Mapped[int]
 
-    tags: Mapped[List["Tags"]] = relationship(back_populates='works')
+    tags: Mapped[List["Tags"]] = relationship(back_populates='work')
     
 
 class TagTypes(Base):
@@ -43,5 +43,5 @@ class Tags(Base):
     # user: Mapped["User"] = relationship(back_populates="addresses")
     work: Mapped["Works"] = relationship(back_populates='tags')
 
-engine = create_engine("sqlite:///aooo.db", echo=True)
-Base.metadata.create_all(engine)
+# engine = create_engine("sqlite:///aooo.db", echo=True)
+# Base.metadata.create_all(engine)

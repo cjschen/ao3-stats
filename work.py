@@ -1,10 +1,12 @@
 from bs4 import BeautifulSoup 
-
+from models import Works, Tags
+from sqlalchemy import inspect
 class Work: 
     def __init__(self, work: BeautifulSoup) -> None:
         self.work = work
 
         self.id = self.work['id'].split("_")[1]
+        self.heading = self.find_all('h4.heading > a')[0]
         self.author = self.find_single_attr("a[rel=author]")
         self.last_updated = self.find_single_attr('.datetime')
 
@@ -33,6 +35,8 @@ class Work:
 
         total_chapters_str = self.work.select("dd.chapters")[0].contents[1].replace('/', '')
         self.total_chapters = None if total_chapters_str == "?" else int(total_chapters_str)
+
+        self.commit()
         
     def find_single_attr(self, search: str, allow_empty = False) -> str:
         all = self.work.select(search)
@@ -51,10 +55,17 @@ class Work:
         if val:
             return int(val.replace(',',''))
         return 0
+    
+    def commit(self):
+        work = Works(**{key.name: self.__dict__[key.name] for key in inspect(Works).c})
+        
+        
+        pass
 
     def __str__(self) -> str:
         return f"""ID: {self.id}
 Author: {self.author}
+Heading: {self.heading}
 Rating: {self.rating}
 Category: {self.catagories}
 Completed: {self.completed}
@@ -75,3 +86,5 @@ Hits: {self.hits}
 Bookmarks: {self.bookmarks}
 Total Chapters: {self.total_chapters}
         """ 
+
+
