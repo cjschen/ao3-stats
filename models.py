@@ -27,6 +27,7 @@ class Works(Base):
     total_chapters: Mapped[int] = mapped_column(Integer, nullable=True)
 
     tags: Mapped[List["Tags"]] = relationship(back_populates='work')
+    fandoms: Mapped[List["Fandoms"]] = relationship(back_populates='work')
     
 
 class TagTypes(Base):
@@ -42,6 +43,14 @@ class Tags(Base):
     type = mapped_column(ForeignKey("tag_types.type"))
     # user: Mapped["User"] = relationship(back_populates="addresses")
     work: Mapped["Works"] = relationship(back_populates='tags')
+
+class Fandoms(Base):
+    __tablename__='fandoms'
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    title: Mapped[str] = mapped_column(String(255))
+    work_id = mapped_column(ForeignKey("works.id"))
+
+    work: Mapped["Works"] = relationship(back_populates='fandoms')
 
 engine = create_engine("sqlite:///aooo.db", echo=True)
 Base.metadata.drop_all(engine)

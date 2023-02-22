@@ -1,5 +1,5 @@
 from bs4 import BeautifulSoup 
-from models import Works, Tags, AppContext, engine
+from models import Works, Tags, Fandoms, engine
 from sqlalchemy import inspect
 from sqlalchemy.orm import Session
 from datetime import datetime
@@ -12,6 +12,7 @@ class Work:
         self.heading = self.find_all('h4.heading > a')[0]
         self.author = self.find_single_attr("a[rel=author]")
         self.last_updated = datetime.strptime(self.find_single_attr('.datetime'), "%d %b %Y")
+        self.fandoms = self.find_all(".fandoms .tag")
 
         # Required Tags
         self.rating = self.find_single_attr(".rating > span")
@@ -71,6 +72,8 @@ class Work:
                 session.add(Tags(title=tag, work_id=self.id, type="character"))
             for tag in self.relationships:
                 session.add(Tags(title=tag, work_id=self.id, type="relationship"))
+            for tag in self.fandoms:
+                session.add(Fandoms(title=tag, work_id=self.id))
 
             session.commit()
 
@@ -84,6 +87,8 @@ Category: {self.catagories}
 Completed: {self.completed}
 Warnings: {self.warnings}
 Last Updated: {self.last_updated}
+---
+Fandoms: {self.fandoms}
 ---
 Summary: {self.summary}
 ---
