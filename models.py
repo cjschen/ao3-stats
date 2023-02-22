@@ -24,7 +24,7 @@ class Works(Base):
     comments: Mapped[int]
     hits: Mapped[int]
     bookmarks: Mapped[int]
-    total_chapters: Mapped[int]
+    total_chapters: Mapped[int] = mapped_column(Integer, nullable=True)
 
     tags: Mapped[List["Tags"]] = relationship(back_populates='work')
     
@@ -36,12 +36,21 @@ class TagTypes(Base):
 
 class Tags(Base):
     __tablename__='tags'
-    id: Mapped[int] = mapped_column(primary_key=True)
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     title: Mapped[str] = mapped_column(String(255))
     work_id = mapped_column(ForeignKey("works.id"))
-    tag_type = mapped_column(ForeignKey("tag_types.type"))
+    type = mapped_column(ForeignKey("tag_types.type"))
     # user: Mapped["User"] = relationship(back_populates="addresses")
     work: Mapped["Works"] = relationship(back_populates='tags')
 
-# engine = create_engine("sqlite:///aooo.db", echo=True)
-# Base.metadata.create_all(engine)
+engine = create_engine("sqlite:///aooo.db", echo=True)
+Base.metadata.drop_all(engine)
+Base.metadata.create_all(engine)
+
+class AppContext:
+    def __new__(cls):
+        if not hasattr(cls, 'instance'):
+            cls.instance = super(AppContext, cls).__new__(cls)
+            cls.engine = create_engine("sqlite:///aooo.db", echo=True)
+            Base.metadata.drop_all(cls.engine)
+            Base.metadata.create_all(cls.engine)

@@ -1,6 +1,9 @@
 from bs4 import BeautifulSoup 
-from models import Works, Tags
+from models import Works, Tags, AppContext, engine
 from sqlalchemy import inspect
+from sqlalchemy.orm import Session
+from datetime import datetime
+
 class Work: 
     def __init__(self, work: BeautifulSoup) -> None:
         self.work = work
@@ -8,12 +11,12 @@ class Work:
         self.id = self.work['id'].split("_")[1]
         self.heading = self.find_all('h4.heading > a')[0]
         self.author = self.find_single_attr("a[rel=author]")
-        self.last_updated = self.find_single_attr('.datetime')
+        self.last_updated = datetime.strptime(self.find_single_attr('.datetime'), "%d %b %Y")
 
         # Required Tags
         self.rating = self.find_single_attr(".rating > span")
         self.catagories = self.find_single_attr(".category > span").split(", ")
-        self.completed = self.find_single_attr('.iswip > span')
+        self.completed = (self.find_single_attr('.iswip > span') == 'Complete Work')
         self.warnings = self.find_single_attr('.warnings > span').split(", ")
 
         # Other tags
@@ -57,10 +60,20 @@ class Work:
         return 0
     
     def commit(self):
-        work = Works(**{key.name: self.__dict__[key.name] for key in inspect(Works).c})
-        
-        
-        pass
+        with Session(engine) as session:
+            work = Works(**{key.name: self.__dict__[key.name] for key in inspect(Works).c})
+            session.add(work)
+            for tag in self.freeforms:
+                session.add(Tags(title=tag, work_id=self.id, type="freeform"))
+            for tag in self.warnings:
+                session.add(Tags(title=tag, work_id=self.id, type="warning"))
+            for tag in self.characters:
+                session.add(Tags(title=tag, work_id=self.id, type="character"))
+            for tag in self.relationships:
+                session.add(Tags(title=tag, work_id=self.id, type="relationship"))
+
+            session.commit()
+
 
     def __str__(self) -> str:
         return f"""ID: {self.id}
