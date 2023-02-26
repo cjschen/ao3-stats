@@ -1,6 +1,6 @@
 from bs4 import BeautifulSoup 
-from models import Works, Tags, Fandoms, engine
-from sqlalchemy import inspect
+from models import Works, Tags, Fandoms, Authors, engine
+from sqlalchemy import inspect, select
 from sqlalchemy.orm import Session
 from datetime import datetime
 
@@ -61,8 +61,20 @@ class Work:
         return 0
     
     def commit(self):
+
         with Session(engine) as session:
+            work = select(Works).where(Works.id == self.id)
+            if session.scalar(work):
+                return
+
+
+        # does not already exists
+        with Session(engine) as session:
+            author = Authors(name=self.author)
+            session.add(author)
+            session.commit()
             work = Works(**{key.name: self.__dict__[key.name] for key in inspect(Works).c})
+            work.author = author.id
             session.add(work)
             for tag in self.freeforms:
                 session.add(Tags(title=tag, work_id=self.id, type="freeform"))
@@ -72,9 +84,8 @@ class Work:
                 session.add(Tags(title=tag, work_id=self.id, type="character"))
             for tag in self.relationships:
                 session.add(Tags(title=tag, work_id=self.id, type="relationship"))
-            for tag in self.fandoms:
-                session.add(Fandoms(title=tag, work_id=self.id))
-
+            for fandom in self.fandoms:
+                session.add(Fandoms(title=fandom, work_id=self.id))
             session.commit()
 
 
