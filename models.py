@@ -1,12 +1,8 @@
 from typing import List
-from sqlalchemy.orm import Session
-from sqlalchemy import String, Integer, DateTime, Boolean, ForeignKey, ForeignKeyConstraint
-from sqlalchemy.orm import DeclarativeBase
-from sqlalchemy.orm import Mapped
-from sqlalchemy.orm import mapped_column
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import Session, DeclarativeBase, Mapped, mapped_column, relationship
+from sqlalchemy import String, Integer, DateTime, ForeignKey
 from sqlalchemy import create_engine
-
+from constants import RATINGS, TAG_TYPES
 class Base(DeclarativeBase):
     pass 
 
@@ -15,7 +11,7 @@ class Works(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     author: Mapped[int] = mapped_column(ForeignKey('authors.id'))
     heading: Mapped[str] = mapped_column(String(255))
-    rating: Mapped[int] = mapped_column(ForeignKey('rating.id'))
+    rating: Mapped[int] = mapped_column(ForeignKey('ratings.id'))
     completed: Mapped[bool]
     last_updated = mapped_column(DateTime)
     summary: Mapped[str] = mapped_column(String(1250))
@@ -29,7 +25,7 @@ class Works(Base):
 
     tags: Mapped[List["Tags"]] = relationship(back_populates='work')
     fandoms: Mapped[List["Fandoms"]] = relationship(back_populates='work')
-    
+
 class Ratings(Base):
     __tablename__='ratings'
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -65,26 +61,20 @@ class Fandoms(Base):
 class Downloads(Base):
     __tablename__='downloads'
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    date = mapped_column(DateTime)
     fandom: Mapped[int] = mapped_column(ForeignKey("fandoms.id"))
+    date = mapped_column(DateTime)
 
 
 engine = create_engine("sqlite:///aooo.db", echo=True)
-# Base.metadata.drop_all(engine)
-# Base.metadata.create_all(engine) 
 
-# tags_types = ["Characters", "Warnings", "Relationship", "Freeform"]
-# with Session(engine) as session:
-#     for tag_type in tags_types:
-#         session.add(TagTypes(name=tag_type))
-#     session.commit()
+def recreate_db():
 
-    
+    Base.metadata.drop_all(engine)
+    Base.metadata.create_all(engine) 
 
-# class AppContext:
-#     def __new__(cls):
-#         if not hasattr(cls, 'instance'):
-#             cls.instance = super(AppContext, cls).__new__(cls)
-#             cls.engine = create_engine("sqlite:///aooo.db", echo=True)
-#             Base.metadata.drop_all(cls.engine)
-#             Base.metadata.create_all(cls.engine)
+    with Session(engine) as session:
+        for tag_type in TAG_TYPES.keys():
+            session.add(TagTypes(name=tag_type))
+        for rating in RATINGS.keys():
+            session.add(Ratings(name=rating))
+        session.commit()
