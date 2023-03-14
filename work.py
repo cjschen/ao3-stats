@@ -12,7 +12,7 @@ class Work:
 
         self.id = self.work['id'].split("_")[1]
         self.heading = self.find_all('h4.heading > a')[0]
-        self.author = self.find_single_attr("a[rel=author]")
+        self.author = self.find_single_attr("a[rel=author]", allow_empty=True) or "Anonymous"
         self.last_updated = datetime.strptime(
             self.find_single_attr('.datetime'), "%d %b %Y")
         self.fandoms = self.find_all(".fandoms .tag")
@@ -37,15 +37,19 @@ class Work:
         self.language = self.find_single_attr("dd.language")
         self.kudos = self.get_number("dd.kudos > a")
         self.words = self.get_number("dd.words")
-        self.chapters = self.get_number("dd.chapters > a")
         self.comments = self.get_number("dd.comments > a")
         self.hits = self.get_number("dd.hits")
         self.bookmarks = self.get_number("dd.bookmarks > a")
 
-        total_chapters_str = self.work.select(
-            "dd.chapters")[0].contents[1].replace('/', '')
-        self.total_chapters = None if total_chapters_str == "?" else int(
-            total_chapters_str)
+        chapters = self.work.select("dd.chapters")[0].text.split('/')
+
+        self.chapters = int(chapters[0])
+        self.total_chapters = None if chapters[1] == "?" else int(
+            chapters[1])
+        # total_chapters_str = self.work.select(
+        #     "dd.chapters")[0].contents[1].replace('/', '')
+        # self.total_chapters = None if total_chapters_str == "?" else int(
+        #     total_chapters_str)
 
         self.commit()
 
@@ -71,17 +75,11 @@ class Work:
 
     def add_tag(self, session, tag, type):
         existing = session.scalars(select(Tags).where(
-            Tags.title == tag and Tags.work == self.work)).first()
+            Tags.title == tag and Tags.work_id == self.id)).first()
         session.add(existing or Tags(title=tag, work_id=self.id,
                                      type=type))
 
     def commit(self):
-        # with Session(engine) as session:
-        #     work = select(Works).where(Works.id == self.id)
-        #     if session.scalar(work):
-        #         return
-
-        # does not already exists
         with Session(engine) as session:
             author = session.scalars(select(Authors).where(
                 Authors.name == self.author)).first() or Authors(name=self.author)
@@ -90,7 +88,7 @@ class Work:
 
             work = session.scalars(select(Works).where(
                 Works.id == self.id)).first() or Works()
-            
+
             for key in inspect(Works).c:
                 setattr(work, key.name, self.__dict__[key.name])
 
@@ -115,6 +113,7 @@ class Work:
                 existing = session.scalars(select(Fandoms).where(
                     Fandoms.title == fandom and Fandoms.work == self.work)).first()
                 session.add(existing or Fandoms(title=fandom, work_id=self.id))
+
             session.commit()
 
     def __str__(self) -> str:
@@ -142,4 +141,4 @@ Comments: {self.comments}
 Hits: {self.hits}
 Bookmarks: {self.bookmarks}
 Total Chapters: {self.total_chapters}
-        """
+"""
