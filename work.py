@@ -46,10 +46,6 @@ class Work:
         self.chapters = int(chapters[0])
         self.total_chapters = None if chapters[1] == "?" else int(
             chapters[1])
-        # total_chapters_str = self.work.select(
-        #     "dd.chapters")[0].contents[1].replace('/', '')
-        # self.total_chapters = None if total_chapters_str == "?" else int(
-        #     total_chapters_str)
 
         self.commit()
 
