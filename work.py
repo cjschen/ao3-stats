@@ -70,8 +70,11 @@ class Work:
         return 0
 
     def add_tag(self, session, tag, type):
+        if tag == "Daiba Nana":
+            a = 0
+            pass
         existing = session.scalars(select(Tags).where(
-            Tags.title == tag and Tags.work_id == self.id)).first()
+            Tags.title == tag, Tags.work_id == self.id)).first()
         session.add(existing or Tags(title=tag, work_id=self.id,
                                      type=type))
 
@@ -107,7 +110,7 @@ class Work:
                 self.add_tag(session, tag, TAG_TYPES["category"])
             for fandom in self.fandoms:
                 existing = session.scalars(select(Fandoms).where(
-                    Fandoms.title == fandom and Fandoms.work == self.work)).first()
+                    Fandoms.title == fandom, Fandoms.work_id == self.id)).first()
                 session.add(existing or Fandoms(title=fandom, work_id=self.id))
 
             session.commit()
